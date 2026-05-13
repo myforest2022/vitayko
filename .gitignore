@@ -1,0 +1,26 @@
+# Секретні ключі — НІКОЛИ не в GitHub!
+.env
+
+# Python кеш
+__pycache__/
+*.pyc
+*.pyo
+
+# Віртуальне середовище
+venv/
+env/
+.venv/
+
+# VS Code
+.vscode/
+
+# База даних
+db/*.sqlite
+db/*.db
+
+# Системні файли
+.DS_Store
+
+# Логи
+*.log
+logs/
