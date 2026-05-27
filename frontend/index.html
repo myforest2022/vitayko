@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VitayKo — Музичні привітання</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ===== ЗМІННІ ===== */
+    :root {
+      --bg: #0D0B14;
+      --card-bg: rgba(255,255,255,0.04);
+      --card-border: rgba(180,111,255,0.2);
+      --purple: #B46FFF;
+      --pink: #FF6FBE;
+      --grad: linear-gradient(135deg, #B46FFF, #FF6FBE);
+      --text: #F0EAF8;
+      --muted: rgba(240,234,248,0.5);
+      --btn-sec-bg: rgba(180,111,255,0.10);
+      --btn-sec-border: rgba(180,111,255,0.28);
+    }
+
+    /* ===== RESET ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    button { border: none; cursor: pointer; outline: none; background: none; }
+
+    /* ===== BODY ===== */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      height: 100dvh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ===== АНІМОВАНИЙ ФОН ===== */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(55px);
+      opacity: 0.16;
+      animation: orbFloat 7s ease-in-out infinite;
+    }
+    .orb-1 { width: 260px; height: 260px; background: #B46FFF; top: -80px; left: -80px; animation-delay: 0s; }
+    .orb-2 { width: 200px; height: 200px; background: #FF6FBE; bottom: -60px; right: -60px; animation-delay: 2.5s; }
+    .orb-3 { width: 150px; height: 150px; background: #6B2FFF; top: 38%; left: 52%; animation-delay: 5s; }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(14px, -14px) scale(1.07); }
+    }
+    /* Зірки */
+    .star {
+      position: absolute;
+      width: 2px; height: 2px;
+      background: white;
+      border-radius: 50%;
+      animation: twinkle 3s ease-in-out infinite;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.08; }
+      50% { opacity: 0.45; }
+    }
+
+    /* ===== ГОЛОВНИЙ КОНТЕЙНЕР ===== */
+    .app {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    /* ===== ЕКРАНИ ===== */
+    .screen {
+      display: none;
+      flex-direction: column;
+      height: 100%;
+      animation: fadeIn .35s ease;
+    }
+    .screen.active { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== ЗОНА КАРТКИ ===== */
+    .card-zone {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 16px 10px;
+    }
+
+    /* ===== КАРТКА ===== */
+    .card {
+      width: 100%;
+      max-width: 320px;
+      border-radius: 22px;
+      border: 1px solid var(--card-border);
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 20px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      position: relative;
+      transition: all .45s cubic-bezier(.34,1.56,.64,1);
+    }
+    /* Внутрішнє сяйво */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(180,111,255,0.07) 0%, rgba(255,111,190,0.04) 100%);
+      pointer-events: none;
+    }
+
+    /* Сплячий стан */
+    .card.sleeping {
+      opacity: 0.42;
+      transform: scale(0.93) translateY(5px);
+    }
+    .card.sleeping .sleep-hint { display: block; }
+    .card.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    /* Іскри на кутах */
+    .spark {
+      position: absolute;
+      font-size: 12px;
+      opacity: 0;
+      transition: opacity .5s ease;
+      pointer-events: none;
+    }
+    .card.active .spark { opacity: 0.45; }
+    .sp1 { top: 8px; left: 10px; }
+    .sp2 { top: 8px; right: 10px; }
+    .sp3 { bottom: 8px; left: 10px; }
+    .sp4 { bottom: 8px; right: 10px; }
+
+    /* ===== ЛОГОТИП НА КАРТЦІ ===== */
+    .card-logo {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: .02em;
+      text-align: center;
+    }
+    .card-tagline {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: .07em;
+      text-transform: uppercase;
+      text-align: center;
+    }
+    .card-divider {
+      width: 100%;
+      height: 0.5px;
+      background: linear-gradient(90deg, transparent, rgba(180,111,255,0.3), transparent);
+    }
+
+    /* Аватар отримувача */
+    .avatar {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 0 20px rgba(180,111,255,0.35);
+      flex-shrink: 0;
+    }
+
+    .card-name {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.4;
+    }
+    .card-sub {
+      font-size: 11px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .card-logo-sm {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      opacity: 0.5;
+    }
+    .sleep-hint {
+      display: none;
+      font-size: 10px;
+      color: var(--purple);
+      font-style: italic;
+      opacity: 0.75;
+      text-align: center;
+    }
+
+    /* ===== WAVEFORM ===== */
+    .waveform {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2.5px;
+      height: 30px;
+    }
+    .wb {
+      width: 2.5px;
+      border-radius: 3px;
+      background: var(--purple);
+      transition: height .3s;
+    }
+    .waveform.idle .wb { height: 3px !important; opacity: 0.25; }
+    .waveform.playing .wb { animation: wdance 1s ease-in-out infinite; }
+    .waveform.playing .wb:nth-child(even) { background: var(--pink); }
+    @keyframes wdance {
+      0%, 100% { height: 4px; opacity: 0.45; }
+      50% { height: 22px; opacity: 1; }
+    }
+    .wb:nth-child(1)  { animation-delay: .00s; }
+    .wb:nth-child(2)  { animation-delay: .08s; }
+    .wb:nth-child(3)  { animation-delay: .16s; }
+    .wb:nth-child(4)  { animation-delay: .24s; }
+    .wb:nth-child(5)  { animation-delay: .12s; }
+    .wb:nth-child(6)  { animation-delay: .20s; }
+    .wb:nth-child(7)  { animation-delay: .04s; }
+    .wb:nth-child(8)  { animation-delay: .18s; }
+    .wb:nth-child(9)  { animation-delay: .10s; }
+    .wb:nth-child(10) { animation-delay: .22s; }
+    .wb:nth-child(11) { animation-delay: .06s; }
+    .wb:nth-child(12) { animation-delay: .14s; }
+
+    /* ===== ПРОГРЕС ПЛЕЄРА ===== */
+    .player-progress {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0.25;
+      transition: opacity .4s;
+    }
+    .player-progress.visible { opacity: 1; }
+    .prog-track {
+      height: 3px;
+      background: rgba(180,111,255,0.18);
+      border-radius: 3px;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .prog-fill {
+      height: 100%;
+      background: var(--grad);
+      border-radius: 3px;
+      width: 0%;
+      transition: width .35s linear;
+    }
+    .prog-time {
+      display: flex;
+      justify-content: space-between;
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    /* ===== АУДІО (прихований) ===== */
+    audio { display: none; }
+
+    /* ===== БЛОК КНОПОК ===== */
+    .btn-block {
+      padding: 6px 14px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Головна кнопка */
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+      background: var(--grad);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: .01em;
+      box-shadow: 0 4px 22px rgba(180,111,255,0.38), 0 2px 8px rgba(255,111,190,0.18);
+      transition: all .2s;
+    }
+    .btn-primary:active { transform: scale(.96); box-shadow: 0 2px 10px rgba(180,111,255,0.3); }
+
+    /* Ряд малих кнопок */
+    .btn-row { display: flex; gap: 8px; }
+    .btn-sec {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 12px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all .2s;
+    }
+    .btn-sec:active { background: rgba(180,111,255,0.2); transform: scale(.97); }
+
+    /* Середня кнопка (Отримати привітання) */
+    .btn-mid {
+      width: 100%;
+      padding: 13px;
+      border-radius: 13px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all .2s;
+    }
+    .btn-mid:active { background: rgba(180,111,255,0.2); transform: scale(.97); }
+
+    /* ===== TOAST ПОВІДОМЛЕННЯ ===== */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(180,111,255,0.15);
+      border: 0.5px solid rgba(180,111,255,0.35);
+      backdrop-filter: blur(10px);
+      color: var(--text);
+      font-size: 13px;
+      padding: 10px 20px;
+      border-radius: 20px;
+      opacity: 0;
+      transition: all .3s;
+      z-index: 100;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Анімований фон -->
+  <div class="bg-layer" id="bgLayer">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <div class="app">
+
+    <!-- ===================== -->
+    <!-- ЕКРАН 1: ДЕМО         -->
+    <!-- ===================== -->
+    <div class="screen active" id="screen-demo">
+
+      <div class="card-zone">
+        <div class="card sleeping" id="demo-card">
+          <span class="spark sp1">✦</span>
+          <span class="spark sp2">✦</span>
+          <span class="spark sp3">✦</span>
+          <span class="spark sp4">✦</span>
+
+          <div class="card-logo">VitayKo</div>
+          <div class="card-tagline">вітальний музичний сервіс</div>
+          <div class="card-divider"></div>
+
+          <div class="card-name" id="demo-card-name">Шаблонне привітання</div>
+          <div class="card-sub" id="demo-card-sub">натисни «Зразок» щоб почути 🎵</div>
+
+          <!-- Waveform -->
+          <div class="waveform idle" id="demo-wave">
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+          </div>
+
+          <!-- Прогрес плеєра -->
+          <div class="player-progress" id="demo-progress">
+            <div class="prog-track" onclick="seekDemo(event)">
+              <div class="prog-fill" id="demo-prog-fill"></div>
+            </div>
+            <div class="prog-time">
+              <span id="demo-time-cur">0:00</span>
+              <span>0:30</span>
+            </div>
+          </div>
+
+          <div class="sleep-hint">картка оживе при натисканні ↓</div>
+        </div>
+      </div>
+
+      <!-- Аудіо для демо -->
+      <audio id="demo-audio" loop>
+        <!-- Підключи свій файл: -->
+        <source src="/static/demo.mp3" type="audio/mpeg">
+      </audio>
+
+      <div class="btn-block">
+        <div class="btn-row">
+          <button class="btn-sec" id="demo-sample-btn" onclick="toggleDemo()">
+            ▶ Зразок
+          </button>
+          <button class="btn-sec" onclick="shareApp()">
+            📤 Поділитися
+          </button>
+        </div>
+        <button class="btn-primary" onclick="goToCreate()">
+          🎵 Привітати
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- ЕКРАН 2: ОТРИМУВАЧ        -->
+    <!-- ========================= -->
+    <div class="screen" id="screen-recipient">
+
+      <div class="card-zone">
+        <div class="card sleeping" id="rec-card">
+          <span class="spark sp1">✦</span>
+          <span class="spark sp2">✦</span>
+          <span class="spark sp3">✦</span>
+          <span class="spark sp4">✦</span>
+
+          <div class="avatar" id="rec-avatar">🎂</div>
+          <div class="card-name" id="rec-name">Олено,<br>з днем народження!</div>
+          <div class="card-sub" id="rec-from">від Миколи · з любов'ю 💛</div>
+          <div class="card-divider"></div>
+          <div class="card-logo-sm">VitayKo</div>
+
+          <!-- Waveform -->
+          <div class="waveform idle" id="rec-wave">
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+            <div class="wb"></div><div class="wb"></div><div class="wb"></div>
+          </div>
+
+          <!-- Прогрес плеєра -->
+          <div class="player-progress" id="rec-progress">
+            <div class="prog-track" onclick="seekRec(event)">
+              <div class="prog-fill" id="rec-prog-fill"></div>
+            </div>
+            <div class="prog-time">
+              <span id="rec-time-cur">0:00</span>
+              <span id="rec-time-total">1:30</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Аудіо для привітання -->
+      <audio id="rec-audio">
+        <source src="" type="audio/mpeg" id="rec-audio-src">
+      </audio>
+
+      <div class="btn-block">
+        <button class="btn-mid" id="rec-play-btn" onclick="toggleRec()">
+          🎁 Отримати привітання
+        </button>
+        <div class="btn-row">
+          <button class="btn-sec" onclick="saveAudio()">
+            💾 Зберегти
+          </button>
+          <button class="btn-sec" onclick="shareGreeting()">
+            📤 Поділитися
+          </button>
+        </div>
+        <button class="btn-primary" onclick="goToCreate()">
+          🎵 Привітати
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- Toast повідомлення -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ===================================================
+    // ІНІЦІАЛІЗАЦІЯ TELEGRAM
+    // ===================================================
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      // Темна тема завжди
+      document.documentElement.style.setProperty('--tg-color-scheme', 'dark');
+    }
+
+    // ===================================================
+    // ЗІРКИ НА ФОНІ
+    // ===================================================
+    const bgLayer = document.getElementById('bgLayer');
+    for (let i = 0; i < 40; i++) {
+      const s = document.createElement('div');
+      s.className = 'star';
+      s.style.cssText = `
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        animation-delay: ${(Math.random() * 3).toFixed(2)}s;
+        opacity: ${(0.05 + Math.random() * 0.2).toFixed(2)};
+      `;
+      bgLayer.appendChild(s);
+    }
+
+    // ===================================================
+    // ВИЗНАЧЕННЯ ЕКРАНУ: ДЕМО чи ОТРИМУВАЧ
+    // ===================================================
+
+    // Читаємо параметр start= з URL або з Telegram initData
+    function getStartParam() {
+      // З URL параметрів (для тестування в браузері)
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('start')) return urlParams.get('start');
+
+      // З Telegram WebApp
+      if (tg?.initDataUnsafe?.start_param) return tg.initDataUnsafe.start_param;
+
+      return null;
+    }
+
+    const startParam = getStartParam();
+
+    if (startParam) {
+      // Є параметр → показуємо сторінку отримувача
+      showRecipientScreen(startParam);
+    } else {
+      // Немає параметра → показуємо демо
+      showDemoScreen();
+    }
+
+    // ===================================================
+    // ДЕМО ЕКРАН
+    // ===================================================
+    function showDemoScreen() {
+      document.getElementById('screen-demo').classList.add('active');
+      document.getElementById('screen-recipient').classList.remove('active');
+    }
+
+    // ===================================================
+    // ЕКРАН ОТРИМУВАЧА
+    // ===================================================
+    function showRecipientScreen(greetingId) {
+      document.getElementById('screen-demo').classList.remove('active');
+      document.getElementById('screen-recipient').classList.add('active');
+
+      // TODO: завантажити дані привітання з бекенду за greetingId
+      // Наразі — тестові дані
+      loadGreetingData(greetingId);
+    }
+
+    function loadGreetingData(id) {
+      // TODO: fetch('/api/greeting/' + id) — підключиш коли буде бекенд
+      // Поки що тестові дані:
+      const testData = {
+        recipientName: 'Олена',
+        occasion: 'день народження',
+        fromName: 'Микола',
+        audioUrl: '/static/demo.mp3', // замінити на реальний файл
+        emoji: '🎂'
+      };
+
+      // Заповнюємо картку
+      if (testData.recipientName) {
+        document.getElementById('rec-name').innerHTML =
+          `${testData.recipientName},<br>з ${testData.occasion}!`;
+      } else {
+        document.getElementById('rec-name').innerHTML =
+          `З ${testData.occasion}!`;
+      }
+      document.getElementById('rec-from').textContent =
+        `від ${testData.fromName} · з любов'ю 💛`;
+      document.getElementById('rec-avatar').textContent = testData.emoji;
+
+      // Підключаємо аудіо
+      if (testData.audioUrl) {
+        document.getElementById('rec-audio-src').src = testData.audioUrl;
+        document.getElementById('rec-audio').load();
+      }
+    }
+
+    // ===================================================
+    // ДЕМО ПЛЕЄР
+    // ===================================================
+    let demoPlaying = false;
+    let demoTimer = null;
+    const demoAudio = document.getElementById('demo-audio');
+
+    function toggleDemo() {
+      if (demoPlaying) {
+        pauseDemo();
+      } else {
+        playDemo();
+      }
+    }
+
+    function playDemo() {
+      // Оживляємо картку
+      wakeCard('demo-card');
+      document.getElementById('demo-card-name').textContent = 'Щаслива іменинниця Оленко!';
+      document.getElementById('demo-card-sub').textContent = 'шаблонне привітання · приклад';
+      document.getElementById('demo-progress').classList.add('visible');
+      document.getElementById('demo-sample-btn').textContent = '⏸ Пауза';
+      document.querySelector('#demo-card .sleep-hint').style.display = 'none';
+
+      // Waveform
+      setWave('demo-wave', true);
+
+      // Аудіо
+      demoAudio.play().catch(() => {
+        // Браузер заблокував автовідтворення — нічого страшного
+        console.log('Аудіо заблоковано браузером. Це нормально при тестуванні.');
+      });
+
+      demoPlaying = true;
+
+      // Прогрес (синхронізуємо з аудіо)
+      demoAudio.ontimeupdate = () => updateProgress(
+        demoAudio, 'demo-prog-fill', 'demo-time-cur'
+      );
+      demoAudio.onended = () => {
+        demoPlaying = false;
+        setWave('demo-wave', false);
+        document.getElementById('demo-sample-btn').textContent = '▶ Зразок';
+        resetProgress('demo-prog-fill', 'demo-time-cur');
+      };
+    }
+
+    function pauseDemo() {
+      demoAudio.pause();
+      demoPlaying = false;
+      setWave('demo-wave', false);
+      document.getElementById('demo-sample-btn').textContent = '▶ Зразок';
+    }
+
+    function seekDemo(e) {
+      if (!demoAudio.duration) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      demoAudio.currentTime = pct * demoAudio.duration;
+    }
+
+    // ===================================================
+    // ПЛЕЄР ОТРИМУВАЧА
+    // ===================================================
+    let recPlaying = false;
+    const recAudio = document.getElementById('rec-audio');
+
+    function toggleRec() {
+      if (recPlaying) {
+        pauseRec();
+      } else {
+        playRec();
+      }
+    }
+
+    function playRec() {
+      // Оживляємо картку
+      wakeCard('rec-card');
+      document.getElementById('rec-progress').classList.add('visible');
+      document.getElementById('rec-play-btn').textContent = '⏸ Пауза';
+
+      setWave('rec-wave', true);
+
+      recAudio.play().catch(() => {
+        console.log('Аудіо заблоковано браузером.');
+      });
+
+      recPlaying = true;
+
+      recAudio.ontimeupdate = () => updateProgress(
+        recAudio, 'rec-prog-fill', 'rec-time-cur'
+      );
+      recAudio.onended = () => {
+        recPlaying = false;
+        setWave('rec-wave', false);
+        document.getElementById('rec-play-btn').textContent = '🎁 Отримати привітання';
+      };
+    }
+
+    function pauseRec() {
+      recAudio.pause();
+      recPlaying = false;
+      setWave('rec-wave', false);
+      document.getElementById('rec-play-btn').textContent = '🎁 Отримати привітання';
+    }
+
+    function seekRec(e) {
+      if (!recAudio.duration) return;
+      const rect = e.currentTarget.getBoundingClientRect();
+      const pct = (e.clientX - rect.left) / rect.width;
+      recAudio.currentTime = pct * recAudio.duration;
+    }
+
+    // ===================================================
+    // ДОПОМІЖНІ ФУНКЦІЇ ПЛЕЄРА
+    // ===================================================
+    function updateProgress(audio, fillId, curId) {
+      if (!audio.duration) return;
+      const pct = (audio.currentTime / audio.duration) * 100;
+      document.getElementById(fillId).style.width = pct + '%';
+      document.getElementById(curId).textContent = formatTime(audio.currentTime);
+    }
+
+    function resetProgress(fillId, curId) {
+      document.getElementById(fillId).style.width = '0%';
+      document.getElementById(curId).textContent = '0:00';
+    }
+
+    function formatTime(sec) {
+      const m = Math.floor(sec / 60);
+      const s = Math.floor(sec % 60);
+      return m + ':' + (s < 10 ? '0' : '') + s;
+    }
+
+    // ===================================================
+    // WAVEFORM
+    // ===================================================
+    function setWave(id, playing) {
+      const w = document.getElementById(id);
+      w.classList.toggle('playing', playing);
+      w.classList.toggle('idle', !playing);
+    }
+
+    // ===================================================
+    // КАРТКА — ОЖИВИТИ
+    // ===================================================
+    function wakeCard(id) {
+      const card = document.getElementById(id);
+      card.classList.remove('sleeping');
+      card.classList.add('active');
+    }
+
+    // ===================================================
+    // КНОПКА "ПРИВІТАТИ" — перехід до форми створення
+    // ===================================================
+    function goToCreate() {
+      // TODO: Етап 3 — відкрити форму створення привітання
+      // Поки заглушка:
+      if (tg) {
+        tg.showAlert('🎵 Форма створення привітання — буде у наступному кроці!');
+      } else {
+        showToast('🎵 Форма створення — скоро!');
+      }
+    }
+
+    // ===================================================
+    // ПОДІЛИТИСЯ
+    // ===================================================
+    function shareApp() {
+      const url = 'https://t.me/VitayKoBot'; // замінити на реальне посилання
+      if (tg?.switchInlineQuery) {
+        tg.switchInlineQuery('', ['users']);
+      } else if (navigator.share) {
+        navigator.share({ title: 'VitayKo', url });
+      } else {
+        navigator.clipboard?.writeText(url);
+        showToast('✅ Посилання скопійовано!');
+      }
+    }
+
+    function shareGreeting() {
+      // Генеруємо посилання на конкретне привітання
+      const greetingId = getStartParam();
+      const url = greetingId
+        ? `https://t.me/VitayKoBot?start=${greetingId}`
+        : 'https://t.me/VitayKoBot';
+
+      if (navigator.share) {
+        navigator.share({ title: 'VitayKo — музичне привітання', url });
+      } else {
+        navigator.clipboard?.writeText(url);
+        showToast('✅ Посилання скопійовано!');
+      }
+    }
+
+    // ===================================================
+    // ЗБЕРЕГТИ
+    // ===================================================
+    function saveAudio() {
+      const src = document.getElementById('rec-audio-src').src;
+      if (!src) { showToast('⚠️ Аудіо ще не завантажено'); return; }
+      const a = document.createElement('a');
+      a.href = src;
+      a.download = 'vitayko-greeting.mp3';
+      a.click();
+      showToast('💾 Збереження...');
+    }
+
+    // ===================================================
+    // TOAST
+    // ===================================================
+    let toastTimer;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+  </script>
+</body>
+</html>
