@@ -808,16 +808,24 @@
     // ПОДІЛИТИСЯ
     // ===================================================
     function shareApp() {
-      const url = 'https://t.me/VitayKoBot'; // замінити на реальне посилання
-      if (tg?.switchInlineQuery) {
-        tg.switchInlineQuery('', ['users']);
-      } else if (navigator.share) {
-        navigator.share({ title: 'VitayKo', url });
-      } else {
-        navigator.clipboard?.writeText(url);
-        showToast('✅ Посилання скопійовано!');
-      }
+    if (tg) {
+        // Telegram метод — відкриває вибір контакту для пересилання
+        tg.showPopup({
+            title: '🎵 VitayKo',
+            message: 'Поділитись посиланням на VitayKo?',
+            buttons: [
+                {id: 'share', type: 'default', text: 'Поділитись'},
+                {id: 'cancel', type: 'cancel'}
+            ]
+        }, function(btnId) {
+            if (btnId === 'share') {
+                tg.openTelegramLink('https://t.me/share/url?url=https://t.me/vitaykoapp_bot&text=🎵 VitayKo — персональні музичні привітання!');
+            }
+        });
+    } else {
+        showToast('🔗 Посилання скопійовано!');
     }
+}
 
     function shareGreeting() {
       // Генеруємо посилання на конкретне привітання
