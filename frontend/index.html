@@ -596,6 +596,98 @@
       margin-top: 2px;
     }
 
+    /* ===== КРОК 2Б — ДЕТАЛІ ПЛАТНОГО ===== */
+    .step2b-zone {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding: 14px 16px 8px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .step2b-zone::-webkit-scrollbar { display: none; }
+
+    /* Текстареа для деталей */
+    .details-textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      line-height: 1.6;
+      outline: none;
+      resize: none;
+      height: 80px;
+      transition: border-color .2s;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .details-textarea::placeholder { color: var(--muted); }
+    .details-textarea:focus { border-color: var(--purple); }
+
+    /* Кнопки стилів */
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 7px;
+    }
+    .style-btn {
+      padding: 10px 6px;
+      border-radius: 11px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      transition: all .2s;
+    }
+    .style-btn .style-emoji { font-size: 18px; }
+    .style-btn:active { transform: scale(.96); }
+    .style-btn.selected {
+      border-color: var(--purple);
+      background: rgba(180,111,255,0.15);
+      color: var(--text);
+    }
+
+    /* Кнопки мови */
+    .lang-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .lang-btn {
+      padding: 12px 8px;
+      border-radius: 12px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      color: var(--muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      transition: all .2s;
+    }
+    .lang-btn:active { transform: scale(.97); }
+    .lang-btn.selected {
+      border-color: var(--purple);
+      background: rgba(180,111,255,0.15);
+      color: var(--text);
+    }
+
     /* ===== TOAST ПОВІДОМЛЕННЯ ===== */
     .toast {
       position: fixed;
@@ -859,6 +951,81 @@
       <div class="btn-block">
         <button class="btn-primary" id="step2-next-btn" onclick="goToStep2B()">
           Далі →
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ========================= -->
+    <!-- ЕКРАН 5: ФОРМА КРОК 2Б   -->
+    <!-- ========================= -->
+    <div class="screen" id="screen-form-2b">
+
+      <!-- Прогрес-бар -->
+      <div class="form-topbar">
+        <button class="back-btn" onclick="goBackStep2B()">←</button>
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-bar-fill" style="width:66%"></div>
+          </div>
+          <div class="progress-label">Крок 2 з 3</div>
+        </div>
+      </div>
+
+      <!-- Деталі -->
+      <div class="step2b-zone">
+
+        <!-- Деталі про людину -->
+        <div>
+          <div class="form-label">Розкажи про людину</div>
+          <textarea
+            class="details-textarea"
+            id="greeting-details"
+            placeholder="Що любить, чим займається, спільні спогади... (необов'язково)"
+          ></textarea>
+        </div>
+
+        <!-- Стиль музики -->
+        <div class="style-grid">
+         <button class="style-btn" data-style="pop" onclick="selectStyle(this)">
+           <span class="style-emoji">🎵</span>Поп
+         </button>
+         <button class="style-btn" data-style="ballad" onclick="selectStyle(this)">
+           <span class="style-emoji">🌙</span>Балада
+         </button>
+         <button class="style-btn" data-style="jazz" onclick="selectStyle(this)">
+           <span class="style-emoji">🎹</span>Джаз
+         </button>
+         <button class="style-btn" data-style="rock" onclick="selectStyle(this)">
+           <span class="style-emoji">🎸</span>Рок
+         </button>
+         <button class="style-btn" data-style="latin" onclick="selectStyle(this)">
+           <span class="style-emoji">💃</span>Латина
+         </button>
+         <button class="style-btn" data-style="acoustic" onclick="selectStyle(this)">
+           <span class="style-emoji">🎻</span>Акустика
+         </button>
+        </div>
+
+        <!-- Мова пісні -->
+        <div>
+          <div class="form-label">Мова пісні</div>
+          <div class="lang-row">
+            <button class="lang-btn selected" data-lang="uk" onclick="selectLang(this)">
+              🇺🇦 Українська
+            </button>
+            <button class="lang-btn" data-lang="en" onclick="selectLang(this)">
+              🇬🇧 Англійська
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Кнопка оплати -->
+      <div class="btn-block">
+        <button class="btn-primary" onclick="goToPayment()">
+          ⭐ Оплатити 49 Stars
         </button>
       </div>
 
@@ -1150,9 +1317,13 @@
     // ПЕРЕМИКАННЯ ЕКРАНІВ
     // ===================================================
     function showScreen(screenId) {
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById(screenId).classList.add('active');
-    }
+  // Зупиняємо демо аудіо при переході
+  if (demoPlaying) {
+    pauseDemo();
+  }
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+}
 
     // ===================================================
     // СПИСОК ПРИВОДІВ
@@ -1242,33 +1413,84 @@
         return;
       }
       if (selectedTariff === 'free') {
-        // Безкоштовно → одразу генеруємо
         generateFreeGreeting();
       } else {
-        // Платно → Крок 2Б з деталями
-        showToast('⭐ Крок 2Б — деталі пісні — буде у наступному кроці!');
+        showScreen('screen-form-2b');
       }
     }
 
+    // ===================================================
+    // КРОК 2Б — ДЕТАЛІ ПЛАТНОГО
+    // ===================================================
+    let selectedStyle = null;
+    let selectedLang = 'uk'; // Українська за замовчуванням
+
+    function selectStyle(btn) {
+      document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedStyle = btn.dataset.style;
+    }
+
+    function selectLang(btn) {
+      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedLang = btn.dataset.lang;
+    }
+
+    function goBackStep2B() {
+      showScreen('screen-form-2');
+    }
+
+    function goToPayment() {
+      if (!selectedStyle) {
+        showToast('⚠️ Оберіть стиль музики');
+        return;
+      }
+      // Збираємо всі дані форми
+      const formData = {
+        recipient_name: document.getElementById('recipient-name').value.trim(),
+        occasion: selectedOccasion,
+        is_paid: 1,
+        style: selectedStyle,
+        language: selectedLang,
+        details: document.getElementById('greeting-details').value.trim()
+      };
+      console.log('Дані форми:', formData);
+
+      // TODO: надіслати formData на Flask API
+      // і отримати greeting_id для оплати
+      showToast('⭐ Запит оплати — підключимо у наступному кроці!');
+    }
+
     function generateFreeGreeting() {
-      // TODO: виклик Flask API для безкоштовної генерації
       showToast('🎵 Генеруємо шаблонне привітання...');
+      // TODO: виклик Flask API для безкоштовної генерації
     }
 
     // ===================================================
     // ПОДІЛИТИСЯ
     // ===================================================
-    function shareApp() {
-      const url = 'https://t.me/VitayKoBot'; // замінити на реальне посилання
-      if (tg?.switchInlineQuery) {
-        tg.switchInlineQuery('', ['users']);
-      } else if (navigator.share) {
-        navigator.share({ title: 'VitayKo', url });
-      } else {
-        navigator.clipboard?.writeText(url);
-        showToast('✅ Посилання скопійовано!');
+function shareApp() {
+  // Зупиняємо демо якщо грає
+  if (demoPlaying) pauseDemo();
+  
+  if (tg) {
+    tg.showPopup({
+      title: '🎵 VitayKo',
+      message: 'Поділитись посиланням на VitayKo?',
+      buttons: [
+        {id: 'share', type: 'default', text: 'Поділитись'},
+        {id: 'cancel', type: 'cancel'}
+      ]
+    }, function(btnId) {
+      if (btnId === 'share') {
+        tg.openTelegramLink('https://t.me/share/url?url=https://t.me/vitaykoapp_bot&text=🎵 VitayKo — персональні музичні привітання!');
       }
-    }
+    });
+  } else {
+    showToast('🔗 Посилання скопійовано!');
+  }
+}
 
     function shareGreeting() {
       // Генеруємо посилання на конкретне привітання
