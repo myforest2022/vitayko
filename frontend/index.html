@@ -1442,25 +1442,71 @@
     }
 
     function goToPayment() {
-      if (!selectedStyle) {
-        showToast('⚠️ Оберіть стиль музики');
-        return;
-      }
-      // Збираємо всі дані форми
-      const formData = {
-        recipient_name: document.getElementById('recipient-name').value.trim(),
-        occasion: selectedOccasion,
-        is_paid: 1,
-        style: selectedStyle,
-        language: selectedLang,
-        details: document.getElementById('greeting-details').value.trim()
-      };
-      console.log('Дані форми:', formData);
+  if (!selectedStyle) {
+    showToast('⚠️ Оберіть стиль музики');
+    return;
+  }
 
-      // TODO: надіслати formData на Flask API
-      // і отримати greeting_id для оплати
-      showToast('⭐ Запит оплати — підключимо у наступному кроці!');
+  // Збираємо всі дані форми
+  const formData = {
+    creator_tg_id: tg?.initDataUnsafe?.user?.id || null,
+    recipient_name: document.getElementById('recipient-name').value.trim(),
+    occasion: selectedOccasion,
+    is_paid: 1,
+    style: selectedStyle,
+    language: selectedLang,
+    details: document.getElementById('greeting-details').value.trim()
+  };
+
+  // Показуємо що обробляємо
+  showToast('⏳ Створюємо замовлення...');
+
+  // Надсилаємо на Flask API
+  fetch('/api/greeting/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(formData)
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.success) {
+      // Зберігаємо greeting_id для подальшого використання
+      window.currentGreetingId = data.greeting_id;
+      // Просимо бота надіслати інвойс
+      requestPayment(data.greeting_id, formData);
+    } else {
+      showToast('❌ Помилка: ' + (data.error || 'Спробуй ще раз'));
     }
+  })
+  .catch(() => showToast('❌ Немає з\'єднання з сервером'));
+}
+
+function requestPayment(greetingId, formData) {
+  if (tg) {
+    // Надсилаємо запит до Flask щоб бот відправив інвойс
+    fetch('/api/payment/request', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        greeting_id: greetingId,
+        tg_user_id: tg?.initDataUnsafe?.user?.id,
+        recipient_name: formData.recipient_name,
+        occasion: formData.occasion
+      })
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (data.success) {
+        showToast('⭐ Перевір повідомлення від бота!');
+      } else {
+        showToast('❌ Помилка: ' + (data.error || 'Спробуй ще раз'));
+      }
+    })
+    .catch(() => showToast('❌ Немає з\'єднання з сервером'));
+  } else {
+    showToast('✅ В Telegram тут відкриється оплата Stars');
+  }
+}
 
     function generateFreeGreeting() {
       showToast('🎵 Генеруємо шаблонне привітання...');

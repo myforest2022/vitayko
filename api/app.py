@@ -108,6 +108,49 @@ def health():
 # ===================================================
 # ЗАПУСК СЕРВЕРА
 # ===================================================
+# ===================================================
+# МАРШРУТ: Запит оплати — бот надсилає інвойс
+# POST /api/payment/request
+# ===================================================
+@app.route('/api/payment/request', methods=['POST'])
+def request_payment():
+    """
+    Mini App викликає цей маршрут.
+    Flask просить бота надіслати інвойс користувачу.
+    """
+    import asyncio
+    from telegram import Bot, LabeledPrice
+
+    data = request.get_json()
+    greeting_id = data.get('greeting_id')
+    tg_user_id = data.get('tg_user_id')
+    recipient_name = data.get('recipient_name', '')
+    occasion = data.get('occasion', 'привітання')
+
+    if not greeting_id or not tg_user_id:
+        return jsonify({'error': 'Відсутні дані'}), 400
+
+    BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+
+    async def send_invoice():
+        bot = Bot(token=BOT_TOKEN)
+        if recipient_name:
+            description = f"Унікальна пісня для {recipient_name} • {occasion}"
+        else:
+            description = f"Унікальна пісня • {occasion}"
+
+        await bot.send_invoice(
+            chat_id=tg_user_id,
+            title="🎵 Персональне привітання VitayKo",
+            description=description,
+            payload=greeting_id,
+            currency="XTR",
+            prices=[LabeledPrice("Персональне привітання", 49)],
+            provider_token=""
+        )
+
+    asyncio.run(send_invoice())
+    return jsonify({'success': True})
 if __name__ == '__main__':
     # Ініціалізуємо базу даних при першому запуску
     init_db()

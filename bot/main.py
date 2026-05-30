@@ -235,6 +235,35 @@ async def successful_payment_handler(
 # ===================================================
 # ЗАПУСК БОТА
 # ===================================================
+async def webapp_data_handler(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
+    """
+    Отримує дані від Mini App через tg.sendData().
+    Надсилає інвойс на оплату Stars.
+    """
+    import json
+    data_str = update.message.web_app_data.data
+    
+    try:
+        data = json.loads(data_str)
+    except Exception:
+        return
+
+    if data.get('action') == 'request_payment':
+        greeting_id = data.get('greeting_id')
+        recipient_name = data.get('recipient_name', '')
+        occasion = data.get('occasion', 'привітання')
+
+        # Надсилаємо інвойс
+        await send_payment_invoice(
+            bot=context.bot,
+            chat_id=update.effective_chat.id,
+            greeting_id=greeting_id,
+            recipient_name=recipient_name,
+            occasion=occasion
+        )
+        logger.info(f"💳 Надіслано інвойс для {greeting_id}")
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
@@ -243,6 +272,9 @@ def main():
     app.add_handler(CommandHandler('help', help_command))
 
     # Обробники платежів — порядок важливий!
+    app.add_handler(MessageHandler(
+        filters.StatusUpdate.WEB_APP_DATA, webapp_data_handler
+    ))
     app.add_handler(PreCheckoutQueryHandler(pre_checkout_handler))
     app.add_handler(MessageHandler(
         filters.SUCCESSFUL_PAYMENT, successful_payment_handler
