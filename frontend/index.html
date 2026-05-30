@@ -369,6 +369,138 @@
     }
     .btn-mid:active { background: rgba(180,111,255,0.2); transform: scale(.97); }
 
+    /* ===== ФОРМА СТВОРЕННЯ ===== */
+
+    /* Верхній бар з прогресом */
+    .form-topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px 0;
+      flex-shrink: 0;
+    }
+    .back-btn {
+      width: 32px; height: 32px;
+      border-radius: 10px;
+      background: var(--btn-sec-bg);
+      border: 0.5px solid var(--btn-sec-border);
+      color: var(--purple);
+      font-size: 16px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+      transition: all .2s;
+    }
+    .back-btn:active { transform: scale(.93); }
+    .progress-wrap { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .progress-track {
+      height: 3px;
+      background: rgba(180,111,255,0.15);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--grad);
+      border-radius: 3px;
+      transition: width .4s ease;
+    }
+    .progress-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-align: right;
+      font-family: 'Inter', sans-serif;
+    }
+
+    /* Зона форми */
+    .form-zone {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 16px 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .form-zone::-webkit-scrollbar { display: none; }
+
+    /* Заголовок секції */
+    .form-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: .05em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    /* Поле вводу імені */
+    .name-input {
+      width: 100%;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .2s;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+    .name-input::placeholder { color: var(--muted); }
+    .name-input:focus { border-color: var(--purple); }
+
+    /* Список приводів */
+    .occasions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .occasion-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border-radius: 12px;
+      border: 0.5px solid var(--btn-sec-border);
+      background: var(--btn-sec-bg);
+      cursor: pointer;
+      transition: all .2s;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .occasion-item:active { transform: scale(.98); }
+    .occasion-item.selected {
+      border-color: var(--purple);
+      background: rgba(180,111,255,0.15);
+    }
+    .occasion-emoji { font-size: 20px; flex-shrink: 0; }
+    .occasion-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .occasion-check {
+      margin-left: auto;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      border: 1.5px solid var(--btn-sec-border);
+      flex-shrink: 0;
+      transition: all .2s;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .occasion-item.selected .occasion-check {
+      background: var(--grad);
+      border-color: transparent;
+    }
+    .occasion-item.selected .occasion-check::after {
+      content: '✓';
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
     /* ===== TOAST ПОВІДОМЛЕННЯ ===== */
     .toast {
       position: fixed;
@@ -528,6 +660,57 @@
           🎵 Привітати
         </button>
       </div>
+    </div>
+
+    <!-- ========================= -->
+    <!-- ЕКРАН 3: ФОРМА КРОК 1    -->
+    <!-- ========================= -->
+    <div class="screen" id="screen-form-1">
+
+      <!-- Прогрес-бар зверху -->
+      <div class="form-topbar">
+        <button class="back-btn" onclick="goBack()">←</button>
+        <div class="progress-wrap">
+          <div class="progress-track">
+            <div class="progress-bar-fill" style="width:33%"></div>
+          </div>
+          <div class="progress-label">Крок 1 з 3</div>
+        </div>
+      </div>
+
+      <!-- Форма -->
+      <div class="form-zone">
+
+        <!-- Ім'я -->
+        <div>
+          <div class="form-label">Як звати людину?</div>
+          <input
+            class="name-input"
+            id="recipient-name"
+            type="text"
+            placeholder="Необов'язково..."
+            maxlength="30"
+            autocomplete="off"
+          >
+        </div>
+
+        <!-- Привід -->
+        <div>
+          <div class="form-label">Оберіть привід</div>
+          <div class="occasions-list" id="occasions-list">
+            <!-- Генерується через JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Кнопка Далі -->
+      <div class="btn-block">
+        <button class="btn-primary" id="step1-next-btn" onclick="goToStep2()">
+          Далі →
+        </button>
+      </div>
+
     </div>
 
   </div><!-- /app -->
@@ -795,37 +978,106 @@
     // КНОПКА "ПРИВІТАТИ" — перехід до форми створення
     // ===================================================
     function goToCreate() {
-      // TODO: Етап 3 — відкрити форму створення привітання
-      // Поки заглушка:
-      if (tg) {
-        tg.showAlert('🎵 Форма створення привітання — буде у наступному кроці!');
-      } else {
-        showToast('🎵 Форма створення — скоро!');
+      showScreen('screen-form-1');
+      renderOccasions();
+    }
+
+    // ===================================================
+    // КНОПКА "←" — повернення назад
+    // ===================================================
+    function goBack() {
+      const current = document.querySelector('.screen.active');
+      if (!current) return;
+      if (current.id === 'screen-form-1') {
+        // З форми крок 1 → назад на демо або отримувача
+        const startParam = getStartParam();
+        showScreen(startParam ? 'screen-recipient' : 'screen-demo');
       }
+    }
+
+    // ===================================================
+    // ПЕРЕМИКАННЯ ЕКРАНІВ
+    // ===================================================
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById(screenId).classList.add('active');
+    }
+
+    // ===================================================
+    // СПИСОК ПРИВОДІВ
+    // ===================================================
+    const OCCASIONS = [
+      { emoji: '🎂', name: 'День народження', value: 'birthday' },
+      { emoji: '💍', name: 'Річниця',          value: 'anniversary' },
+      { emoji: '💒', name: 'Весілля',          value: 'wedding' },
+      { emoji: '👶', name: 'Народження дитини',value: 'newborn' },
+      { emoji: '🎓', name: 'Випускний',        value: 'graduation' },
+      { emoji: '💼', name: 'Нова робота',      value: 'newjob' },
+      { emoji: '🏠', name: 'Новосілля',        value: 'newhome' },
+      { emoji: '💪', name: 'Одужання',         value: 'recovery' },
+      { emoji: '🎄', name: 'Різдво',           value: 'christmas' },
+      { emoji: '🎆', name: 'Новий рік',        value: 'newyear' },
+      { emoji: '🐣', name: 'Великдень',        value: 'easter' },
+      { emoji: '💐', name: '8 Березня',        value: 'march8' },
+      { emoji: '👨‍👩‍👧', name: 'День матері/батька', value: 'parentsday' },
+      { emoji: '🇺🇦', name: 'День незалежності', value: 'independence' },
+      { emoji: '💝', name: 'День закоханих',   value: 'valentines' },
+      { emoji: '🎉', name: 'Просто так',       value: 'justbecause' },
+    ];
+
+    let selectedOccasion = null;
+
+    function renderOccasions() {
+      const list = document.getElementById('occasions-list');
+      if (list.children.length > 0) return; // Вже відрендерено
+
+      OCCASIONS.forEach(occ => {
+        const item = document.createElement('div');
+        item.className = 'occasion-item';
+        item.dataset.value = occ.value;
+        item.innerHTML = `
+          <span class="occasion-emoji">${occ.emoji}</span>
+          <span class="occasion-name">${occ.name}</span>
+          <span class="occasion-check"></span>
+        `;
+        item.addEventListener('click', () => selectOccasion(occ.value, item));
+        list.appendChild(item);
+      });
+    }
+
+    function selectOccasion(value, el) {
+      // Знімаємо виділення з попереднього
+      document.querySelectorAll('.occasion-item').forEach(i => i.classList.remove('selected'));
+      // Виділяємо обраний
+      el.classList.add('selected');
+      selectedOccasion = value;
+      // Скролимо кнопку "Далі" у видиму зону
+      document.getElementById('step1-next-btn').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function goToStep2() {
+      if (!selectedOccasion) {
+        showToast('⚠️ Оберіть привід для привітання');
+        return;
+      }
+      // TODO: Крок 2 — вибір тарифу
+      showToast('✅ Крок 2 — буде у наступному кроці!');
     }
 
     // ===================================================
     // ПОДІЛИТИСЯ
     // ===================================================
     function shareApp() {
-    if (tg) {
-        // Telegram метод — відкриває вибір контакту для пересилання
-        tg.showPopup({
-            title: '🎵 VitayKo',
-            message: 'Поділитись посиланням на VitayKo?',
-            buttons: [
-                {id: 'share', type: 'default', text: 'Поділитись'},
-                {id: 'cancel', type: 'cancel'}
-            ]
-        }, function(btnId) {
-            if (btnId === 'share') {
-                tg.openTelegramLink('https://t.me/share/url?url=https://t.me/vitaykoapp_bot&text=🎵 VitayKo — персональні музичні привітання!');
-            }
-        });
-    } else {
-        showToast('🔗 Посилання скопійовано!');
+      const url = 'https://t.me/VitayKoBot'; // замінити на реальне посилання
+      if (tg?.switchInlineQuery) {
+        tg.switchInlineQuery('', ['users']);
+      } else if (navigator.share) {
+        navigator.share({ title: 'VitayKo', url });
+      } else {
+        navigator.clipboard?.writeText(url);
+        showToast('✅ Посилання скопійовано!');
+      }
     }
-}
 
     function shareGreeting() {
       // Генеруємо посилання на конкретне привітання
